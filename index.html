@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soyboys</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <div id="game-container">
+        <!-- Custom Cursor -->
+        <div id="custom-cursor">
+            <img src="soya.webp" alt="Soya Flaske Crosshair">
+        </div>
+
+        <!-- Gameplay Layer -->
+        <div id="targets-layer"></div>
+        
+        <!-- Cover Foreground -->
+        <div id="foreground-layer"></div>
+
+        <!-- UI Layer -->
+        <div id="ui-layer">
+            <div id="score-display">Score: <span id="current-score">0</span></div>
+            <div id="lives-display">Liv: <span id="current-lives">❤️❤️❤️</span></div>
+        </div>
+
+        <!-- Start Screen / Game Over Screen -->
+        <div id="start-screen">
+            <h1 id="game-title">SOYBOYS</h1>
+            <p id="game-over-text" style="display: none; color: red;">GAME OVER</p>
+            <p>Highscore: <span id="highscore-display">0</span></p>
+            <button id="start-btn">Start Nyt Spil</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
