@@ -11,7 +11,8 @@ body {
     align-items: center;
     height: 100vh;
     background-color: #222;
-    cursor: none; /* Hide default cursor to use custom one */
+    cursor: none;
+    /* Hide default cursor to use custom one */
 }
 
 #game-container {
@@ -22,26 +23,61 @@ body {
     background-image: url('bg.png');
     background-size: cover;
     background-position: center bottom;
-    box-shadow: 0 0 20px rgba(0,0,0,0.8);
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
     border: 4px solid #fff;
 }
 
 /* Custom Cursor */
 #custom-cursor {
     position: absolute;
-    width: 50px;
-    height: 100px;
-    pointer-events: none; /* Let clicks pass through */
+    width: 250px;
+    height: 250px;
+    pointer-events: none;
+    /* Let clicks pass through */
     z-index: 9999;
-    transform: translate(-50%, -50%); /* Center on mouse */
-    transition: transform 0.05s ease-out; /* Slight lag for weight */
 }
 
-#custom-cursor img {
+#custom-cursor img.weapon {
     width: 100%;
     height: 100%;
     object-fit: contain;
     filter: drop-shadow(2px 4px 6px black);
+    /* Center the weapon tip */
+    transform: translate(-15%, -15%);
+    transition: transform 0.05s ease-out;
+}
+
+#custom-cursor div.crosshair {
+    position: absolute;
+    top: 15%;
+    left: 15%;
+    width: 20px;
+    height: 20px;
+    transform: translate(-50%, -50%);
+    z-index: 10000;
+}
+
+#custom-cursor div.crosshair::before,
+#custom-cursor div.crosshair::after {
+    content: '';
+    position: absolute;
+    background-color: red;
+}
+
+#custom-cursor div.crosshair::before {
+    top: 50%;
+    left: -10px;
+    right: -10px;
+    height: 2px;
+    transform: translateY(-50%);
+}
+
+#custom-cursor div.crosshair::after {
+    left: 50%;
+    top: -10px;
+    bottom: -10px;
+    width: 2px;
+    transform: translateX(-50%);
 }
 
 /* UI Layer */
@@ -56,6 +92,8 @@ body {
     color: white;
     text-shadow: 2px 2px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000;
     font-size: 16px;
+    pointer-events: none;
+    /* Make sure UI text doesn't steal clicks */
 }
 
 /* Targets */
@@ -66,43 +104,54 @@ body {
     width: 100%;
     height: 100%;
     z-index: 40;
+    pointer-events: none;
+    /* Container doesn't block */
 }
 
 .target {
     position: absolute;
-    bottom: -150px; /* Start hidden below */
-    width: 100px;
-    height: 150px;
-    background-size: cover;
-    background-position: center;
-    border-radius: 20px;
-    border: 3px solid #fff;
+    width: 180px;
+    height: 180px;
     cursor: none;
-    transition: bottom 0.5s ease-in-out;
+    pointer-events: auto;
+    /* Re-enable clicks on target container */
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+    transition: none;
 }
 
-.target.up {
-    bottom: 120px; /* Pop up above the foreground cover */
+.duck-body {
+    display: none;
+    /* No longer using separate body/face */
+}
+
+.duck-face {
+    display: none;
+}
+
+.target.flip {
+    transform: scaleX(-1);
 }
 
 .target.hit {
-    background-color: red;
-    transform: scale(0.8) rotate(20deg);
-    transition: all 0.2s;
+    background-color: transparent;
+    transform: scale(0.8) rotate(180deg);
+    transition: all 0.5s;
+    opacity: 0;
 }
 
-/* Foreground Cover Layer to hide targets popping up */
-#foreground-layer {
+/* Projectile */
+.projectile {
     position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 150px;
-    background-image: url('cover.png');
-    background-size: 200px;
-    background-repeat: repeat-x;
-    background-position: bottom;
-    z-index: 50; /* Above targets, below UI */
+    width: 25px;
+    height: 25px;
+    background-image: url('soy_bean_transparent.png');
+    background-size: contain;
+    background-repeat: no-repeat;
+    pointer-events: none;
+    z-index: 9000;
+    transition: all 0.2s linear;
 }
 
 /* Start / Game Over Screen */
@@ -117,7 +166,8 @@ body {
     flex-direction: column;
     justify-content: center;
     align-items: center;
-    z-index: 200; /* Highest so it covers everything */
+    z-index: 200;
+    /* Highest so it covers everything */
     color: white;
     text-align: center;
 }
@@ -140,7 +190,8 @@ body {
     background-color: #4CAF50;
     color: white;
     border: 4px solid white;
-    cursor: none; /* Inherit none, will show custom inside container */
+    cursor: none;
+    /* Inherit none, will show custom inside container */
     font-family: 'Press Start 2P', cursive;
 }
 

@@ -15,8 +15,14 @@ let highscore = localStorage.getItem('soyboys_highscore') || 0;
 let isPlaying = false;
 let spawnInterval;
 let gameSpeed = 2000; // How often targets spawn
+let baseFlightTime = 3000; // Time to cross screen
 
-const targetImages = ['Joakim.jpg', 'Nils.jpg'];
+// Preload the target faces (now full chimeras)
+const targetImages = ['duck_joakim_real_transparent.png', 'duck_nils_real_transparent.png'];
+targetImages.forEach(src => {
+    const img = new Image();
+    img.src = src;
+});
 
 // Initialize Highscore UI
 highscoreDisplay.textContent = highscore;
@@ -26,8 +32,8 @@ gameContainer.addEventListener('mousemove', (e) => {
     const rect = gameContainer.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
-    
-    // Position cursor at center of mouse tip
+
+    // Position cursor near center of mouse tip
     customCursor.style.left = `${x}px`;
     customCursor.style.top = `${y}px`;
 });
@@ -48,24 +54,25 @@ function startGame() {
     score = 0;
     lives = 3;
     gameSpeed = 2000;
+    baseFlightTime = 3500;
     updateUI();
-    
+
     startScreen.style.display = 'none';
     gameOverText.style.display = 'none';
     titleEl.style.display = 'none';
-    
+
     // Clear any existing targets
     targetsLayer.innerHTML = '';
-    
+
     spawnInterval = setTimeout(spawnTarget, gameSpeed);
 }
 
 function updateUI() {
     currentScoreEl.textContent = score;
     let hearts = '';
-    for(let i=0; i<lives; i++) hearts += '❤️';
+    for (let i = 0; i < lives; i++) hearts += '❤️';
     currentLivesEl.textContent = hearts;
-    
+
     if (lives <= 0) {
         gameOver();
     }
@@ -76,62 +83,73 @@ function spawnTarget() {
 
     const target = document.createElement('div');
     target.classList.add('target');
-    
+
     // Randomly choose Joakim or Nils
     const imgIndex = Math.floor(Math.random() * targetImages.length);
     target.style.backgroundImage = `url('${targetImages[imgIndex]}')`;
-    
-    // Random horizontal position (0 to game width - target width)
-    const maxX = 800 - 100; // container width - target width
-    const randomX = Math.floor(Math.random() * maxX);
-    target.style.left = `${randomX}px`;
-    
+
+    // Randomly choose left or right side spawn
+    const startFromLeft = Math.random() > 0.5;
+    const startY = 50 + Math.random() * 200; // random height in sky
+    const endY = 50 + Math.random() * 200; // random height in sky for destination
+
+    // Starting position
+    target.style.top = `${startY}px`;
+
+    if (startFromLeft) {
+        target.style.left = `-100px`;
+        target.classList.add('flip'); // Flip so it faces right
+    } else {
+        target.style.left = `800px`;
+    }
+
+    // Add to DOM first so transition will trigger on next frame
+    targetsLayer.appendChild(target);
+
     let isHit = false;
 
     // Hit detection
     target.addEventListener('mousedown', () => {
         if (!isPlaying || isHit) return;
         isHit = true;
-        
+
         // Visual hit effect
         target.classList.add('hit');
-        target.style.backgroundImage = 'none'; // remove pic so it looks like it exploded or disappeared
-        
+        // Stop it in its tracks by locking current inline style width/left, or let it fall?
+        // Simpler: Just fade it out and drop
+        target.style.transition = 'all 0.5s ease-in';
+        target.style.top = `${startY + 100}px`;
+
         score += 10;
         updateUI();
-        
+
         // Increase difficulty
-        if (gameSpeed > 600) {
-            gameSpeed -= 50;
-        }
+        if (gameSpeed > 800) gameSpeed -= 50;
+        if (baseFlightTime > 1500) baseFlightTime -= 100;
 
         setTimeout(() => {
-            target.remove();
-        }, 300);
+            if (target.parentNode) target.remove();
+        }, 500);
     });
 
-    targetsLayer.appendChild(target);
+    // Animate across screen
+    const flightDuration = baseFlightTime + (Math.random() * 500);
 
-    // Animate up
-    setTimeout(() => {
-        target.classList.add('up');
-    }, 50);
+    // Ensure styles are calculated before setting transition
+    requestAnimationFrame(() => {
+        target.style.transition = `left ${flightDuration}ms linear, top ${flightDuration}ms linear`;
+        target.style.left = startFromLeft ? `800px` : `-100px`;
+        target.style.top = `${endY}px`;
 
-    // Animate down after a delay (if not hit)
-    setTimeout(() => {
-        if (!isHit && isPlaying) {
-            target.classList.remove('up');
-            
-            // Deduct life since it escaped
-            setTimeout(() => {
-                if (target.parentNode) {
-                    target.remove();
-                    lives--;
-                    updateUI();
-                }
-            }, 500); // Wait for down animation to finish
-        }
-    }, 1500); // Time it stays up
+        // Timer for when it reaches the edge
+        setTimeout(() => {
+            if (!isHit && isPlaying && target.parentNode) {
+                target.remove();
+                lives--; // escaped
+                updateUI();
+            }
+        }, flightDuration);
+    });
 
     // Schedule next spawn
     if (isPlaying) {
@@ -143,27 +161,50 @@ function spawnTarget() {
 function gameOver() {
     isPlaying = false;
     clearTimeout(spawnInterval);
-    
+
     if (score > highscore) {
         highscore = score;
         localStorage.setItem('soyboys_highscore', highscore);
         highscoreDisplay.textContent = highscore;
     }
-    
+
     startScreen.style.display = 'flex';
     gameOverText.style.display = 'block';
-    
-    // Make the button say "Prøv igen" 
+
     startBtn.textContent = "Prøv Igen";
 }
 
-// Global click effect to simulate shooting
-gameContainer.addEventListener('mousedown', () => {
-    if(!isPlaying) return;
-    
-    // Recoil effect on cursor
-    customCursor.style.transform = `translate(-50%, -50%) rotate(-15deg) scale(1.1)`;
+// Global click effect to simulate shooting soy beans
+gameContainer.addEventListener('mousedown', (e) => {
+    if (!isPlaying) return;
+
+    // Recoil effect on weapon cursor
+    customCursor.style.transform = `translate(-20%, -20%) rotate(-15deg) scale(1.1)`;
     setTimeout(() => {
-        customCursor.style.transform = `translate(-50%, -50%) rotate(0deg) scale(1)`;
+        customCursor.style.transform = `translate(-20%, -20%) rotate(0deg) scale(1)`;
     }, 100);
+
+    // Create bean projectile
+    const rect = gameContainer.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    const bean = document.createElement('div');
+    bean.classList.add('projectile');
+    bean.style.left = `${x}px`;
+    bean.style.top = `${y}px`;
+
+    // Starts large at the cursor
+    bean.style.transform = 'scale(1)';
+    targetsLayer.appendChild(bean);
+
+    // Animate the bean scaling down to look like it flies into the screen
+    requestAnimationFrame(() => {
+        bean.style.transform = 'scale(0.1)';
+        bean.style.opacity = '0';
+
+        setTimeout(() => {
+            if (bean.parentNode) bean.remove();
+        }, 200);
+    });
 });
